@@ -1,0 +1,1 @@
+echo 92559255 | python -m pwiz -e postgresql -u postgres -P 92559255 postgres > ./src/paas/backend/repo/schema.py
