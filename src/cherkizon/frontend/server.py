@@ -8,7 +8,9 @@ from src.mybootstrap_mvc_fastapi_itskovichanton.error_handler import ErrorHandle
 from src.mybootstrap_mvc_fastapi_itskovichanton.middleware_logging import HTTPLoggingMiddleware
 from src.mybootstrap_mvc_fastapi_itskovichanton.presenters import JSONResultPresenterImpl
 from src.mybootstrap_mvc_itskovichanton.result_presenter import ResultPresenter
+from starlette.requests import Request
 
+from src.cherkizon.backend.entity.common import Deploy
 from src.cherkizon.frontend.controller import Controller
 
 
@@ -35,6 +37,10 @@ class Server:
         return r
 
     def add_routes(self):
-        @self.fast_api.get("/deploy/register")
-        async def register_deploy():
-            return self.presenter.present(await self.controller.register_deploy())
+        @self.fast_api.post("/deploy/register")
+        async def register_deploy(request: Request, deploy: Deploy):
+            return self.presenter.present(await self.controller.register_deploy(deploy))
+
+        @self.fast_api.post("/deploy/list")
+        async def register_deploy(request: Request, filter: Deploy):
+            return self.presenter.present(await self.controller.list_deploys(filter))

@@ -1,0 +1,20 @@
+GET http://192.168.200.156:8081/send-kh?send=False
+Accept: application/json
+
+<> 2024-02-07T125827.500.json
+
+###
+
+GET http://192.168.200.56:8081/send-kh?send=True&date=2024-03-31&name=MBULAK00_CSDF_20240331000000&id=2808
+Accept: application/json
+
+<> 2024-02-07T125827.500.json
+
+###
+
+POST http://localhost:8081/deploy/list
+Accept: application/json
+
+{"env": "dev"}
+
+###

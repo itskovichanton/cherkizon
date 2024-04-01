@@ -37,7 +37,7 @@ prod:
   db:
     host: localhost
     port: 5432
-    username: postgres
+    user: postgres
     password: 92559255
 
 
@@ -45,6 +45,6 @@ dev:
   db:
     host: localhost
     port: 3
-    username: postgres
+    user: postgres
     password: 92559255
 

@@ -18,7 +18,7 @@ class DB(Protocol):
 
 @dataclass
 class _Config:
-    username: str
+    user: str
     password: str
     host: str = "localhost"
     port: int = 5432
@@ -29,8 +29,8 @@ class DBImpl(DB):
 
     @singleton
     def get(self) -> PostgresqlDatabase:
-        return PostgresqlDatabase('postgres', **self.cfg.__dict__)
+        return PostgresqlDatabase('cherkizon', **self.cfg.__dict__)
 
     @singleton
     def get_psycopg2_connection(self):
-        return psycopg2.connect(dbname='postgres', **self.cfg.__dict__)
+        return psycopg2.connect(dbname='cherkizon', **self.cfg.__dict__)

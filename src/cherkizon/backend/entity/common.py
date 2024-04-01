@@ -1,34 +1,47 @@
-import datetime
 from dataclasses import dataclass
 
 
 @dataclass
-class Gitlab:
-    url: str = None
-    token: str = None
-    api_version: int = None
+class MemoryVolume:
+    available: int
+    all: int
 
 
 @dataclass
-class Namespace:
-    id: int = None
+class MachineInfo:
+    ip: str
+    available: bool = False  # машина доступна
+    ram: MemoryVolume = None  # из free -h
+    disk: MemoryVolume = None  # из df -h
+
+
+@dataclass
+class Machine:
+    ip: str = None
     name: str = None
-    gitlab: Gitlab = None
-    active: bool = None
+    description: str = None
+    info: MachineInfo = None
+
+
+@dataclass
+class DeployHealth:
+    available: bool  # порт доступен
+    status: str  # из systemctl (todo: сделай enum)
+    err_log: str = None  # хвост лога ошибок
+
+
+@dataclass
+class Deploy:
+    machine: Machine = None
+    version: str = None
+    author: str = None
+    service: str = None
+    http_port: int = None
+    env: str = None
+    health: DeployHealth = None
 
 
 @dataclass
 class Service:
     id: int = None
-    created_at: datetime.datetime = None
-    deleted_at: datetime.datetime = None
-    description: str = None
-    docs_url: str = None
-    gitlab_project_id: int = None
     name: str = None
-    namespace: Namespace = None
-    repo: str = None
-    slack_channel_id: int = None
-
-    class Meta:
-        table_name = 'service'

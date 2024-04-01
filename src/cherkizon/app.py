@@ -2,11 +2,7 @@ from src.mybootstrap_core_itskovichanton.app import Application
 from src.mybootstrap_core_itskovichanton.logger import LoggerService
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
-
 from src.cherkizon.backend.repo.db import DB
-
-from src.cherkizon.backend.repo.namespace import NamespaceRepo
-from src.cherkizon.backend.usecase.sync_services import SyncServicesUseCase
 from src.cherkizon.frontend.server import Server
 
 
@@ -20,10 +16,8 @@ class CherkizonApp(Application):
     # packer: BatchFilePacker
     # fm: FileManagerClient
     # order_repo: OrderRepo
-    namespaces_repo: NamespaceRepo
-    logger_service: LoggerService
-    sync_services_usecase: SyncServicesUseCase
 
+    logger_service: LoggerService
 
     def run(self):
         # self.events.subscribe_on_events()
