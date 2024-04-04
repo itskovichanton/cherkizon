@@ -1,0 +1,31 @@
+1. Хелсчек - добавляются таблица healthcheck с колонками
+    deploy_name; enabled (включены проверки хотя можно просто пинговать), last_healthcheck_time; last_hc_result
+
+
+healthcheck проводится каждые 10 мин и результаты складываются в таблицу и данные будут прикрепляться в list/deploys
+
+
+
+2. аудит - когда делаются действия - результаты записываются в таблцицу audit
+
+
+3. метрики от бд и хттп собираются прометеем и отображаются в графанах или еще гдето для каждого сервиса
++ алерты на просадку времени ответов в базу в тг или мм
+
+4. общение в матермосте и алерты туда?
+
+5. грейлог
+
+6. фронтенд
+
+7. сайты отдельные для equifax , ...
+
+8. CherkizonHTTPAdapter в отдельной либе как бин
+
+
+warden://reports/find_report?w-version=master&w-env=dev&w-secure=True
+or
+warden://reports[secure=false, env=dev, version=master]/find_report?task_id=232332
+
+
+--> https://192.168.200.156:8083/find_report?task_id=232332

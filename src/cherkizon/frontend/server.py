@@ -52,3 +52,7 @@ class Server:
         @self.fast_api.post("/deploy/stop")
         async def stop_deploy(request: Request, deploy: Deploy):
             return self.presenter.present(await self.controller.execute_action_on_deploy(deploy, action="stop"))
+
+        @self.fast_api.get("/deploy/get_internal_url")
+        async def get_internal_url(request: Request, url: str):
+            return self.presenter.present(await self.controller.get_internal_url(url))

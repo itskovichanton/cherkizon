@@ -39,7 +39,6 @@ class ServiceM(BaseModel):
 class DeployM(BaseModel):
     author = CharField()
     env = CharField()
-    http_port = IntegerField()
     machine = ForeignKeyField(column_name='machine_ip', field='ip', model=MachineM)
     service = ForeignKeyField(column_name='service_id', field='id', model=ServiceM)
     version = CharField()

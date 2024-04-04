@@ -52,6 +52,10 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
 
         self._enrich_with_data(r, machines, with_machines_options, deploys)
 
+        for deploy in r.deploys:
+            deploy.url = deploy.get_url(protocol="eureka")
+            deploy.internal_url = deploy.get_url()
+
         return r
 
     def _enrich_with_deploy_info(self, deploys: list[Deploy]):

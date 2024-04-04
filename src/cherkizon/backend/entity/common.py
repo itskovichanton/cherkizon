@@ -50,11 +50,12 @@ class DeployStatus:
 @hashed
 @dataclass
 class Deploy:
+    url: str = None
+    internal_url: str = None
     machine: Machine = None
     version: str = None
     author: str = None
     service: str = None
-    http_port: int = None
     env: str = None
     status: DeployStatus = None
 
@@ -63,6 +64,19 @@ class Deploy:
         if isinstance(srv, Service):
             srv = srv.name
         return f"{srv}_v-{self.version}_env-{self.env}"
+
+    def get_url(self, protocol=None):
+        if not protocol:
+            protocol = "http"
+        if protocol == "eureka":
+            service = self.service
+            if isinstance(service, Service):
+                service = service.name
+            params = {"version": self.version, "env": self.env}
+            params = [f"{key}={value}" for key, value in sorted(params.items()) if value]
+            params = ",".join(params)
+            return f"{protocol}://{service}[{params}]"
+        return f"{protocol}://{self.machine.ip}:{self.status.port}"
 
 
 @hashed
