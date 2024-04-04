@@ -74,9 +74,8 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
     def _enrich_with_data(self, r: DeployListing, machines, with_machines_options, deploys):
         execute_parallel(
             [
-                (self._enrich_with_machines, [r, machines,
-                                              with_machines_options])
-                if (with_machines_options.enrich and with_machines_options.with_info) else None,
+                (self._enrich_with_machines, [r, machines])
+                if with_machines_options.with_info and with_machines_options.enrich else None,
                 (self._enrich_with_deploy_info, [deploys]),
             ],
         )
