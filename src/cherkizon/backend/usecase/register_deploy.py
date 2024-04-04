@@ -17,7 +17,8 @@ class RegisterDeployUseCaseImpl(RegisterDeployUseCase):
     deploy_repo: DeployRepo
 
     def init(self, **kwargs):
-        deploys = self.deploy_repo.find(filter=Deploy(author="aitskovich", machine=Machine(ip="192.168.200.156")))
+        ...
+        # deploys = self.deploy_repo.find(filter=Deploy(author="aitskovich", machine=Machine(ip="192.168.200.156")))
         # self.register(
         #     Deploy(http_port=8082, version="feature/RFC-1232", env="dev", author="aitskovich", service="reports-kg",
         #            machine=Machine(ip="192.168.200.156", name="test-kg")))

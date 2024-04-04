@@ -32,6 +32,8 @@ loggers:
   http:
     backup_count: 3
 
+agent:
+  port: 4001
 
 prod:
   db:

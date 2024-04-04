@@ -43,6 +43,7 @@ class DeployM(BaseModel):
     machine = ForeignKeyField(column_name='machine_ip', field='ip', model=MachineM)
     service = ForeignKeyField(column_name='service_id', field='id', model=ServiceM)
     version = CharField()
+    is_deleted: BooleanField()
 
     class Meta:
         table_name = 'deploy'

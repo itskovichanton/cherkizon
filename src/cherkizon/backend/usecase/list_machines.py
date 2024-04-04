@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from typing import Protocol
 
+from src.mybootstrap_core_itskovichanton.utils import calc_parallel
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
+from src.cherkizon.backend.apis.agent import Agent
 from src.cherkizon.backend.entity.common import Machine, MachineInfo
 
 
@@ -20,13 +22,19 @@ class WithMachinesOptions:
 
 class ListMachinesUseCase(Protocol):
 
-    def find(self, ips: list[str]) -> dict[str, MachineInfo]:
+    def find(self, ips: set[str]) -> dict[str, MachineInfo]:
         ...
 
 
 @bean
 class ListMachinesUseCaseImpl(ListMachinesUseCase):
+    agent: Agent
 
-    def find(self, ips: list[str]) -> dict[str, MachineInfo]:
-        return {"192.168.200.156": MachineInfo(ip="192.168.200.156"),
-                "192.168.200.56": MachineInfo(ip="192.168.200.56", available=True)}
+    def find(self, ips: set[str]) -> dict[str, MachineInfo]:
+        def _get_machine_info(ip):
+            try:
+                return self.agent.get_machine_info(ip)
+            except BaseException as ex:
+                return MachineInfo(available=False, ip=ip, connection_error=str(ex))
+
+        return calc_parallel(ips, _get_machine_info)

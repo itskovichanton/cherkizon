@@ -1,20 +1,35 @@
+import datetime
 from dataclasses import dataclass
 
+from src.mybootstrap_core_itskovichanton.utils import hashed
 
+
+@hashed
+@dataclass
+class CPU:
+    load: float
+
+
+@hashed
 @dataclass
 class MemoryVolume:
     available: int
-    all: int
+    used: int
+    total: int
 
 
+@hashed
 @dataclass
 class MachineInfo:
-    ip: str
+    ip: str = None
     available: bool = False  # машина доступна
+    connection_error: str = None
     ram: MemoryVolume = None  # из free -h
     disk: MemoryVolume = None  # из df -h
+    cpu: CPU = None
 
 
+@hashed
 @dataclass
 class Machine:
     ip: str = None
@@ -23,13 +38,17 @@ class Machine:
     info: MachineInfo = None
 
 
+@hashed
 @dataclass
-class DeployHealth:
-    available: bool  # порт доступен
-    status: str  # из systemctl (todo: сделай enum)
-    err_log: str = None  # хвост лога ошибок
+class DeployStatus:
+    port: str = None
+    pid: str = None
+    last_start: datetime.datetime = None
+    connection_error: str = None
+    port_status: str = None
 
 
+@hashed
 @dataclass
 class Deploy:
     machine: Machine = None
@@ -38,9 +57,16 @@ class Deploy:
     service: str = None
     http_port: int = None
     env: str = None
-    health: DeployHealth = None
+    status: DeployStatus = None
+
+    def get_name(self) -> str:
+        srv = self.service
+        if isinstance(srv, Service):
+            srv = srv.name
+        return f"{srv}_v-{self.version}_env-{self.env}"
 
 
+@hashed
 @dataclass
 class Service:
     id: int = None
