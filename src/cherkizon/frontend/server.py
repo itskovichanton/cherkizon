@@ -42,5 +42,13 @@ class Server:
             return self.presenter.present(await self.controller.register_deploy(deploy))
 
         @self.fast_api.post("/deploy/list")
-        async def register_deploy(request: Request, filter: Deploy):
+        async def list_deploys(request: Request, filter: Deploy):
             return self.presenter.present(await self.controller.list_deploys(filter))
+
+        @self.fast_api.post("/deploy/restart")
+        async def restart_deploy(request: Request, deploy: Deploy):
+            return self.presenter.present(await self.controller.execute_action_on_deploy(deploy, action="restart"))
+
+        @self.fast_api.post("/deploy/stop")
+        async def stop_deploy(request: Request, deploy: Deploy):
+            return self.presenter.present(await self.controller.execute_action_on_deploy(deploy, action="stop"))

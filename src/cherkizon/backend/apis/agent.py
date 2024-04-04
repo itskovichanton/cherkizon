@@ -23,6 +23,12 @@ class Agent(Protocol):
     def get_deploy_status(self, ip: str, service: Service | str) -> DeployStatus:
         ...
 
+    def restart_service(self, ip: str, service: Service | str):
+        ...
+
+    def stop_service(self, ip: str, service: Service | str):
+        ...
+
 
 @bean(config=("agent", _Config, _Config()))
 class AgentImpl(Agent):
@@ -37,6 +43,17 @@ class AgentImpl(Agent):
         r.ip = ip
         return r
 
+    def stop_service(self, ip: str, service: Service | str):
+        return self._execute_action(ip, service, endpoint="stop_service")
+
+    def restart_service(self, ip: str, service: Service | str):
+        return self._execute_action(ip, service, endpoint="restart_service")
+
+    def _execute_action(self, ip: str, service: Service | str, endpoint):
+        if isinstance(service, Service):
+            service = service.name
+        return self._call(ip, endpoint, service=service)
+
     def get_deploy_status(self, ip: str, service: Service | str) -> DeployStatus:
         if isinstance(service, Service):
             service = service.name
@@ -46,8 +63,7 @@ class AgentImpl(Agent):
             r["last_start"] = datetime.strptime(r["last_start"][3:], "%Y-%m-%dT%H:%M:%S%z")
         except:
             ...
-        return DeployStatus(port=r["port_from_pid"], pid=r["pid"], port_status=r["port_status"],
-                            last_start=r["last_start"])
+        return DeployStatus(port=r["port_from_pid"], port_status=r["port_status"], last_start=r["last_start"])
 
     def _call(self, ip, endpoint, cl=None, **kwargs):
         r = self._session.get(url=f"http://{ip}:{self.config.port}/{endpoint}", params=kwargs)

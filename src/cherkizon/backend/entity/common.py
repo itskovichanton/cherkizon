@@ -42,7 +42,6 @@ class Machine:
 @dataclass
 class DeployStatus:
     port: str = None
-    pid: str = None
     last_start: datetime.datetime = None
     connection_error: str = None
     port_status: str = None

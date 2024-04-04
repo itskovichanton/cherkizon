@@ -65,20 +65,18 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
         for deploy, deploy_info in calc_parallel(deploys, _get_deploy_info).items():
             deploy_dict[deploy.get_name()].status = deploy_info
 
-    def _enrich_with_machines(self, r: DeployListing, machines, with_machines_options: WithMachinesOptions):
-        if not with_machines_options.enrich:
-            return
-
-        if with_machines_options.with_info:
-            machine_infos = self.list_machines_uc.find(ips=set(machines.keys()))
-            for ip, machine_info in machine_infos.items():
-                machines[ip].info = machine_info
-            r.machines = list(machines.values())
+    def _enrich_with_machines(self, r: DeployListing, machines):
+        machine_infos = self.list_machines_uc.find(ips=set(machines.keys()))
+        for ip, machine_info in machine_infos.items():
+            machines[ip].info = machine_info
+        r.machines = list(machines.values())
 
     def _enrich_with_data(self, r: DeployListing, machines, with_machines_options, deploys):
         execute_parallel(
             [
-                (self._enrich_with_machines, [r, machines, with_machines_options]),
+                (self._enrich_with_machines, [r, machines,
+                                              with_machines_options])
+                if (with_machines_options.enrich and with_machines_options.with_info) else None,
                 (self._enrich_with_deploy_info, [deploys]),
             ],
         )
