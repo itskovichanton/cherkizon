@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from src.mybootstrap_core_itskovichanton.utils import calc_parallel
+from src.mybootstrap_core_itskovichanton.utils import calc_parallel, execute_parallel
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
 from src.cherkizon.backend.apis.agent import Agent
@@ -36,7 +36,7 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
 
     def init(self, **kwargs):
         return
-        a=self.find(filter=Deploy(service=8))
+        a = self.find(filter=Deploy(service=8))
         print(a)
 
     def find(self, filter: Deploy = None, with_machines_options: WithMachinesOptions = None) -> DeployListing:
@@ -50,14 +50,7 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
         if not with_machines_options:
             with_machines_options = WithMachinesOptions()
 
-        if with_machines_options.enrich:
-            if with_machines_options.with_info:
-                machine_infos = self.list_machines_uc.find(ips=set(machines.keys()))
-                for ip, machine_info in machine_infos.items():
-                    machines[ip].info = machine_info
-                r.machines = list(machines.values())
-
-        self._enrich_with_deploy_info(deploys)
+        self._enrich_with_data(r, machines, with_machines_options, deploys)
 
         return r
 
@@ -71,3 +64,21 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
         deploy_dict = {deploy.get_name(): deploy for deploy in deploys}
         for deploy, deploy_info in calc_parallel(deploys, _get_deploy_info).items():
             deploy_dict[deploy.get_name()].status = deploy_info
+
+    def _enrich_with_machines(self, r: DeployListing, machines, with_machines_options: WithMachinesOptions):
+        if not with_machines_options.enrich:
+            return
+
+        if with_machines_options.with_info:
+            machine_infos = self.list_machines_uc.find(ips=set(machines.keys()))
+            for ip, machine_info in machine_infos.items():
+                machines[ip].info = machine_info
+            r.machines = list(machines.values())
+
+    def _enrich_with_data(self, r: DeployListing, machines, with_machines_options, deploys):
+        execute_parallel(
+            [
+                (self._enrich_with_machines, [r, machines, with_machines_options]),
+                (self._enrich_with_deploy_info, [deploys]),
+            ],
+        )
