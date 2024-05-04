@@ -6,6 +6,7 @@ from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
 from src.cherkizon.backend.apis.agent import Agent
 from src.cherkizon.backend.entity.common import Machine, Deploy
+from src.cherkizon.backend.repo.healthcheck import HealthcheckRepo
 
 from src.cherkizon.backend.repo.machine import MachineRepo
 from src.cherkizon.backend.usecase.list_machines import ListMachinesUseCase
@@ -19,7 +20,7 @@ class DeployListing:
 
 class ListDeploysUseCase(Protocol):
 
-    def find(self, filter: Deploy = None, with_machines: bool = True) -> DeployListing:
+    def find(self, filter: Deploy = None, with_machines: bool = True, with_healthcheck: bool = True) -> DeployListing:
         ...
 
 
@@ -27,14 +28,19 @@ class ListDeploysUseCase(Protocol):
 class ListDeploysUseCaseImpl(ListDeploysUseCase):
     machine_repo: MachineRepo
     list_machines_uc: ListMachinesUseCase
+    healthcheck_repo: HealthcheckRepo
     agent: Agent
 
     def init(self, **kwargs):
-        return
-        a = self.find(filter=Deploy(name="reports", env="dev"))
-        print(a)
+        # return
+        # a = self.find(filter=Deploy(name="reports", env="dev"))
+        a = self.find(with_healthcheck=True)
+        # print(a)
 
-    def find(self, filter: Deploy = None, with_machines: bool = True) -> DeployListing:
+    def find(self, filter: Deploy = None, with_machines: bool = True, with_healthcheck: bool = True) -> DeployListing:
+
+        if not filter:
+            filter = Deploy()
 
         r = DeployListing(deploys=[], machines=set())
 
@@ -58,5 +64,12 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
 
         for deploy in r.deploys:
             deploy.prepare()
+
+        if with_healthcheck:
+            healthchecks = self.healthcheck_repo.list(services=[d.systemd_name for d in r.deploys])
+            if healthchecks:
+                healthchecks = {hc.service_name: hc for hc in healthchecks}
+                for deploy in r.deploys:
+                    deploy.healthcheck_result = healthchecks.get(deploy.systemd_name)
 
         return r

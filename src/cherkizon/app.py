@@ -3,7 +3,8 @@ from src.mybootstrap_core_itskovichanton.logger import LoggerService
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
 from src.cherkizon.backend.repo.db import DB
-from src.cherkizon.backend.usecase.get_deploy_url import GetDeployUrlUseCase
+from src.cherkizon.backend.usecase.deploy_reanimator import DeployReanimatorUseCase
+from src.cherkizon.backend.usecase.healthcheck import HealthcheckUseCase
 from src.cherkizon.frontend.server import Server
 
 
@@ -11,6 +12,8 @@ from src.cherkizon.frontend.server import Server
 class CherkizonApp(Application):
     server: Server
     db: DB
+    healthcheck: HealthcheckUseCase
+    deploy_reanimator_uc: DeployReanimatorUseCase
     # uc1: GetDeployUrlUseCase
     # file_content_provider: BatchFileWriter
     # batch_file_validator: BatchFileValidator

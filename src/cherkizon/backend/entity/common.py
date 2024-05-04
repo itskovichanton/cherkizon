@@ -32,6 +32,17 @@ class MachineInfo:
 
 @hashed
 @dataclass
+class HealthcheckResult:
+    result: dict = None
+    service_name: str = None
+    time: datetime.datetime = None
+
+    def is_failed(self) -> bool:
+        return "error" in self.result
+
+
+@hashed
+@dataclass
 class Machine:
     ip: str = None
     name: str = None
@@ -59,6 +70,7 @@ class Deploy:
     version: str = None
     author: str = None
     env: str = None
+    healthcheck_result: HealthcheckResult = None
 
     def get_url(self, protocol=None):
         if not protocol:
@@ -78,8 +90,9 @@ class Deploy:
     def _prepare_creds(self):
         # 'cherkizon__name_reports__env_dev__author_aitskovich__version_master.service'
         self.systemd_name = self.name
-        n = self.name[11:len(self.name) - 8]
-        n = n.split("__")
-        for kv in n:
-            k, v = kv.split("_")
-            setattr(self, k, v)
+        if self.name:
+            n = self.name[11:len(self.name) - 8]
+            n = n.split("__")
+            for kv in n:
+                k, v = kv.split("_")
+                setattr(self, k, v)
