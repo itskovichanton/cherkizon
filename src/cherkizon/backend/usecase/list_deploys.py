@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
+from src.mybootstrap_core_itskovichanton.metrics_export import MetricsExporter
 from src.mybootstrap_core_itskovichanton.utils import calc_parallel, execute_parallel
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
@@ -30,9 +31,10 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
     list_machines_uc: ListMachinesUseCase
     healthcheck_repo: HealthcheckRepo
     agent: Agent
+    me: MetricsExporter
 
     def init(self, **kwargs):
-        # return
+        return
         # a = self.find(filter=Deploy(name="reports", env="dev"))
         a = self.find(with_healthcheck=True)
         # print(a)
@@ -64,6 +66,7 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
 
         for deploy in r.deploys:
             deploy.prepare()
+            deploy.metrics_url = self.me.get_metrics_url(deploy.systemd_name)
 
         if with_healthcheck:
             healthchecks = self.healthcheck_repo.list(services=[d.systemd_name for d in r.deploys])

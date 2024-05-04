@@ -55,6 +55,7 @@ class Machine:
 @dataclass
 class Deploy:
     port: str = None
+    metrics_url: str = None
     last_start: datetime.datetime = None
     connection_error: str = None
     port_status: str = None

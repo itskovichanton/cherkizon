@@ -21,7 +21,6 @@ class CherkizonApp(Application):
     # packer: BatchFilePacker
     # fm: FileManagerClient
     # order_repo: OrderRepo
-
     logger_service: LoggerService
 
     def run(self):

@@ -11,6 +11,9 @@ email:
   port: 25
   encoding: utf-8
 
+healthcheck:
+  token: f567a8da21a261ed67f46ba07defecd9
+  url: http://localhost:9090/graph
 
 alerts:
   emails:
@@ -47,9 +50,18 @@ prod:
 
 
 dev:
-  db:
+  pgdb:
     host: localhost
     port: 3
     user: postgres
     password: 92559255
+  db:
+    disable_pool: True
+    db_monitoring_enabled: False
+    host: 192.168.200.250
+    database: D:\Finance\IB_Base\DB_1_LAST.IB
+    port: 3050
+    url: 192.168.200.250/3050:D:\Finance\IB_Base\DB_1_LAST.IB
+    username: SYSDBA
+    password: F!ora80X
 

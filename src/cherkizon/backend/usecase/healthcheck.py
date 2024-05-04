@@ -1,5 +1,6 @@
 import datetime
 import json
+from dataclasses import dataclass
 
 import requests
 from paprika import threaded
@@ -14,7 +15,13 @@ from src.cherkizon.backend.usecase.list_deploys import ListDeploysUseCase
 from src.cherkizon.common.events import event_bus, EVENT_HEALTHCHECK_RESULT_RECEIVED
 
 
-@bean
+@dataclass
+class _Config:
+    token: str = "f567a8da21a261ed67f46ba07defecd9"
+    url: str = "http://localhost:9090/graph"
+
+
+@bean(config=("healthcheck", _Config, _Config()))
 class HealthcheckUseCase:
     list_deploys_uc: ListDeploysUseCase
     healthcheck_check: HealthcheckRepo
@@ -34,7 +41,7 @@ class HealthcheckUseCase:
             self.healthcheck_check.save(healthcheck_result)
             self.alerts.send(
                 Alert(
-                    message=f"Healthcheck деплоя {deploy.systemd_name} завершился с ошибкой\n\n{healthcheck_result.result}")
+                    message=f"Healthcheck деплоя '{deploy.systemd_name}' завершился с ошибкой\n\n{healthcheck_result.result}")
             )
             event_bus.emit(EVENT_HEALTHCHECK_RESULT_RECEIVED, deploy=deploy, healthcheck_result=healthcheck_result,
                            threads=True)
@@ -43,7 +50,7 @@ class HealthcheckUseCase:
         r = HealthcheckResult(service_name=deploy.systemd_name)
         try:
             req = self._session.get(url=f"{deploy.internal_url}/healthcheck",
-                                    headers={"sessionToken": "f567a8da21a261ed67f46ba07defecd9"})
+                                    headers={"sessionToken": self.config.token})
             r.result = parse_response(req)
         except BaseException as ex:
             r.result = {"error": {"message": str(ex)}}

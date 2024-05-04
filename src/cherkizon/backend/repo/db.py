@@ -24,7 +24,7 @@ class _Config:
     port: int = 5432
 
 
-@bean(cfg=("db", _Config))
+@bean(cfg=("pgdb", _Config))
 class DBImpl(DB):
 
     @singleton
