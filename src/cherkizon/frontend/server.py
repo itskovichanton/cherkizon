@@ -8,9 +8,11 @@ from src.mybootstrap_mvc_fastapi_itskovichanton.error_handler import ErrorHandle
 from src.mybootstrap_mvc_fastapi_itskovichanton.middleware_logging import HTTPLoggingMiddleware
 from src.mybootstrap_mvc_fastapi_itskovichanton.presenters import JSONResultPresenterImpl
 from src.mybootstrap_mvc_itskovichanton.result_presenter import ResultPresenter
+from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
 from src.cherkizon.backend.entity.common import Deploy
+
 from src.cherkizon.frontend.controller import Controller
 
 
@@ -34,24 +36,26 @@ class Server:
         self.error_handler_fast_api_support.mount(r)
         self.healthcheck_support.mount(r)
         r.add_middleware(HTTPLoggingMiddleware, encoding="utf-8", logger=self.logger_service.get_file_logger("http"))
+        r.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            # Здесь можно указать разрешенные источники, например ["http://localhost", "http://localhost:3000"]
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
         return r
 
     def add_routes(self):
-        @self.fast_api.post("/deploy/register")
-        async def register_deploy(request: Request, deploy: Deploy):
-            return self.presenter.present(await self.controller.register_deploy(deploy))
 
         @self.fast_api.post("/deploy/list")
         async def list_deploys(request: Request, filter: Deploy):
             return self.presenter.present(await self.controller.list_deploys(filter))
 
-        @self.fast_api.post("/deploy/restart")
-        async def restart_deploy(request: Request, deploy: Deploy):
-            return self.presenter.present(await self.controller.execute_action_on_deploy(deploy, action="restart"))
-
-        @self.fast_api.post("/deploy/stop")
-        async def stop_deploy(request: Request, deploy: Deploy):
-            return self.presenter.present(await self.controller.execute_action_on_deploy(deploy, action="stop"))
+        @self.fast_api.get("/deploy/{action}")
+        async def restart_deploy(request: Request, deploy_name: str, machine: str, action: str):
+            return self.presenter.present(await self.controller.execute_action_on_deploy(deploy_name, action, machine))
 
         @self.fast_api.get("/deploy/get_internal_url")
         async def get_internal_url(request: Request, url: str):

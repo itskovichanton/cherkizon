@@ -35,6 +35,9 @@ loggers:
 agent:
   port: 4001
 
+unikron:
+  host: http://localhost:8082
+
 prod:
   db:
     host: localhost

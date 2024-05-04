@@ -10,9 +10,8 @@ from src.mybootstrap_mvc_itskovichanton.exceptions import CoreException, \
     ERR_REASON_SERVER_RESPONDED_WITH_ERROR_NOT_FOUND
 
 from src.cherkizon.backend.apis.agent import Agent
-from src.cherkizon.backend.entity.common import Deploy, Machine, DeployStatus
-from src.cherkizon.backend.repo.deploy import DeployRepo
-from src.cherkizon.backend.usecase.list_deploys import ListDeploysUseCase, WithMachinesOptions
+from src.cherkizon.backend.entity.common import Machine, Deploy
+from src.cherkizon.backend.usecase.list_deploys import ListDeploysUseCase
 from src.cherkizon.backend.usecase.list_machines import ListMachinesUseCase
 
 
@@ -20,7 +19,7 @@ def _extract_url_params(s):
     params = {}
     matches = re.findall(r'\[(.*?)]', s)
     if matches:
-        params_list = matches[0].split(', ')
+        params_list = [p.strip() for p in matches[0].split(',')]
         for param in params_list:
             key, value = param.split('=')
             params[key] = value
@@ -44,23 +43,16 @@ class GetDeployUrlUseCase(Protocol):
 class GetDeployUrlUseCaseImpl(GetDeployUrlUseCase):
     list_deploys_uc: ListDeploysUseCase
 
-    def init(self, **kwargs):
-        return
-        print(
-            self.compile_url(url="eureka://8[secure=false, env=dev, version=master]/find_report?task_id=232332",
-                             protocol="eureka"),
-        )
-
     def get_deploy_url(self, deploy: Deploy, protocol=None) -> str:
 
-        if not (deploy.machine and deploy.status and deploy.status.port):
-            deploys = self.list_deploys_uc.find(deploy, with_machines_options=WithMachinesOptions(enrich=False)).deploys
+        if not (deploy.machine and deploy.replica and deploy.deploy.port):
+            deploys = self.list_deploys_uc.find(deploy, with_machines=False).deploys
             if len(deploys) == 0:
-                raise CoreException(message="Деплой не найден", reason=ERR_REASON_SERVER_RESPONDED_WITH_ERROR_NOT_FOUND)
+                raise CoreException(message="деплой не найден", reason=ERR_REASON_SERVER_RESPONDED_WITH_ERROR_NOT_FOUND)
             deploy = deploys[0]
 
-        if not (deploy.status and deploy.status.port):
-            raise CoreException(message="порт деплоя не поднят")
+        if not (deploy.replica and deploy.deploy.port):
+            raise CoreException(message="порт деплоя не отвечает")
 
         return deploy.get_url(protocol)
 
