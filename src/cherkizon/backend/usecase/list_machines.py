@@ -33,6 +33,7 @@ class ListMachinesUseCaseImpl(ListMachinesUseCase):
     machine_repo: MachineRepo
 
     def find(self, ips: set[str] = None) -> dict[str, MachineInfo]:
+
         def _get_machine_info(ip):
             try:
                 return self.agent.get_machine_info(ip)

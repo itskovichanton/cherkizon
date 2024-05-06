@@ -9,6 +9,9 @@ from src.cherkizon.backend.apis.agent import Agent
 from src.cherkizon.backend.entity.common import Deploy
 from src.cherkizon.common.events import event_bus, EVENT_DEPLOY_RESTARTED, EVENT_DEPLOY_STOPPED
 
+DEPLOY_ACTION_RESTART = "restart"
+DEPLOY_ACTION_STOP = "stop"
+
 
 class DeployControllerUseCase(Protocol):
 
@@ -21,12 +24,15 @@ class DeployControllerUseCaseImpl(DeployControllerUseCase):
     agent: Agent
 
     def execute(self, deploy_name: str, action: str, machine: str):
-        if action == "restart":
-            self.agent.restart_service(ip=machine, service=deploy_name)
-        elif action == "stop":
-            self.agent.stop_service(ip=machine, service=deploy_name)
+        r = None
+        if action == DEPLOY_ACTION_RESTART:
+            r = self.agent.restart_service(ip=machine, service=deploy_name)
+        elif action == DEPLOY_ACTION_STOP:
+            r = self.agent.stop_service(ip=machine, service=deploy_name)
 
-        event_bus.emit(EVENT_DEPLOY_RESTARTED if action == "restart" else EVENT_DEPLOY_STOPPED,
-                       deploy_name=deploy_name, action=action, machine=machine, threads=True)
+        event = EVENT_DEPLOY_RESTARTED if action == DEPLOY_ACTION_RESTART else EVENT_DEPLOY_STOPPED
+        event_bus.emit(event, deploy_name=deploy_name, action=action, machine=machine, threads=True)
+        if r:
+            return r
 
         raise CoreException(message=f"Действие {action} не поддерживается", reason=ERR_REASON_VALIDATION)
