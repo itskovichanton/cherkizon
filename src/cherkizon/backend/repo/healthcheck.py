@@ -41,7 +41,7 @@ class HealthcheckRepoImpl(HealthcheckRepo):
         m.result = json.dumps(r.result)
         m.time = r.time
         m.service_name = r.service_name
-        m.save(force_insert=True)
+        m.save(force_insert=False)
 
     # @to_real_entity
     # def list(self, env: str = None) -> list[Machine]:

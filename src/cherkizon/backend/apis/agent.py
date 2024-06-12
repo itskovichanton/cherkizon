@@ -42,7 +42,7 @@ class AgentImpl(Agent):
         self._session.timeout = 5
 
     def get_deploys(self, ip: str, service: str | str) -> list[Deploy]:
-        return self._call(ip, cl=list[Deploy], endpoint="find_services")
+        return self._call(ip, cl=list[Deploy], endpoint="find_services", service=service)
 
     def get_machine_info(self, ip: str) -> MachineInfo:
         r = self._call(ip, cl=MachineInfo, endpoint="get_machine_info")

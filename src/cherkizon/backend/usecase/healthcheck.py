@@ -39,12 +39,23 @@ class HealthcheckUseCase:
         for deploy in deploys:
             healthcheck_result = self._check_health(deploy)
             self.healthcheck_check.save(healthcheck_result)
-            self.alerts.send(
-                Alert(
-                    message=f"Healthcheck деплоя '{deploy.systemd_name}' завершился с ошибкой\n\n{healthcheck_result.result}")
-            )
+            self._process_healthcheck(deploy, healthcheck_result)
             event_bus.emit(EVENT_HEALTHCHECK_RESULT_RECEIVED, deploy=deploy, healthcheck_result=healthcheck_result,
                            threads=True)
+
+    def _process_healthcheck(self, deploy: Deploy, healthcheck_result: HealthcheckResult):
+        results = healthcheck_result.result.get("results")
+
+        def is_failed(x: dict):
+            passed = x.get("passed")
+            return (not passed) and (type(passed) == bool)
+
+        failed_checks = [x for x in results if is_failed(x)]
+        if failed_checks:
+            self.alerts.send(
+                Alert(
+                    message=f"Healthcheck деплоя '{deploy.systemd_name}' завершился с ошибками\n\n{failed_checks}")
+            )
 
     def _check_health(self, deploy: Deploy) -> HealthcheckResult:
         r = HealthcheckResult(service_name=deploy.systemd_name)
@@ -52,6 +63,8 @@ class HealthcheckUseCase:
             req = self._session.get(url=f"{deploy.internal_url}/healthcheck",
                                     headers={"sessionToken": self.config.token})
             r.result = parse_response(req)
+            if type(r.result) == str:
+                r.result = json.loads(r.result)
         except BaseException as ex:
             r.result = {"error": {"message": str(ex)}}
         r.time = datetime.datetime.now()
