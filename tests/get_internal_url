@@ -1,0 +1,9 @@
+curl --location --globoff --request GET 'http://localhost:8081/deploy-url/get_internal_url?url=eureka%3A%2F%2Freports[secure%3Dfalse%2C%20env%3Ddev%2C%20version%3Dmaster%2C%20protocol%3Dhttp]' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic YWl0c2tvdmljaDpjZWI5ZTBkZWZhYzY1MGMyZDJmYjQxY2Y3ZGNkODg4NA==' \
+--data '{"name": "reports"}'
+
+
+{
+    "result": "http://192.168.200.156:8083"
+}

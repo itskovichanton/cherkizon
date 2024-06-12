@@ -53,6 +53,7 @@ class GetDeployUrlUseCaseImpl(GetDeployUrlUseCase):
         return deploy.get_url(protocol)
 
     def compile_url(self, url: str, protocol=None) -> str:
+
         if url.startswith("eureka"):
             url_params = _extract_url_params(url)
             try:
@@ -65,6 +66,7 @@ class GetDeployUrlUseCaseImpl(GetDeployUrlUseCase):
                                                          version=url_params.get("version") or "master",
                                                          env=url_params.get("env") or "dev"), protocol=protocol)
             url = url_host + url_tail
+
         return url
 
         # eureka://reports[secure=false, env=dev, version=master]/find_report?task_id=232332
