@@ -59,6 +59,6 @@ class Server:
         async def execute_action_on_deploy(request: Request, deploy_name: str, machine: str, action: str):
             return self.presenter.present(await self.controller.execute_action_on_deploy(deploy_name, action, machine))
 
-        @self.fast_api.get("/deploy/get_internal_url")
+        @self.fast_api.get("/deploy-url/get_internal_url")
         async def get_internal_url(request: Request, url: str):
             return self.presenter.present(await self.controller.get_internal_url(url))
