@@ -28,6 +28,9 @@ class MemoryVolume:
     used: int
     total: int
 
+    def used_perc(self):
+        return self.used / self.total
+
 
 @hashed
 @dataclass
@@ -50,6 +53,13 @@ class HealthcheckResult:
 
     def is_failed(self) -> bool:
         return "error" in self.result
+
+
+@hashed
+@dataclass
+class MachineHealthcheckResult:
+    result: MachineInfo = None
+    time: datetime.datetime = None
 
 
 @hashed
@@ -84,6 +94,7 @@ class Deploy:
     author: str = None
     env: str = None
     healthcheck_result: HealthcheckResult = None
+    info: dict = None
 
     def get_url(self, protocol=None):
         if not protocol:
@@ -107,5 +118,8 @@ class Deploy:
             n = self.name[11:len(self.name) - 8]
             n = n.split("__")
             for kv in n:
-                k, v = kv.split("_")
-                setattr(self, k, v)
+                try:
+                    k, v = kv.split("_")
+                    setattr(self, k, v)
+                except:
+                    ...

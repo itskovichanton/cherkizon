@@ -6,6 +6,7 @@ from src.mybootstrap_core_itskovichanton.utils import calc_parallel, execute_par
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 
 from src.cherkizon.backend.apis.agent import Agent
+from src.cherkizon.backend.apis.replicas import Replicas
 from src.cherkizon.backend.entity.common import Machine, Deploy
 from src.cherkizon.backend.repo.healthcheck import HealthcheckRepo
 
@@ -32,6 +33,7 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
     healthcheck_repo: HealthcheckRepo
     agent: Agent
     me: MetricsExporter
+    replicas: Replicas
 
     def init(self, **kwargs):
         return
@@ -51,6 +53,11 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
                 deploys_on_machine = self.agent.get_deploys(ip=m.ip, service=filter.name)
                 for dpl in deploys_on_machine:
                     dpl.machine = m
+                    dpl.prepare()
+                    try:
+                        dpl.info = self.replicas.get_info(dpl.internal_url)
+                    except:
+                        ...
                 return deploys_on_machine
             except BaseException as ex:
                 return [Deploy(machine=m, connection_error=str(ex))]

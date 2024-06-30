@@ -9,10 +9,16 @@ from src.mybootstrap_core_itskovichanton.utils import repeat, hashed
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 from src.mybootstrap_mvc_fastapi_itskovichanton.utils import parse_response
 
-from src.cherkizon.backend.entity.common import Deploy, HealthcheckResult
+from src.cherkizon.backend.entity.common import Deploy, HealthcheckResult, MachineHealthcheckResult
+from src.cherkizon.backend.realtime_config import AlertIfDiskUsagePercentBiggerThanRealTimeConfigEntry, \
+    AlertIfRAMUsagePercentBiggerThanRealTimeConfigEntry
 from src.cherkizon.backend.repo.healthcheck import HealthcheckRepo
+from src.cherkizon.backend.repo.machine_healthcheck import MachineHealthcheckRepo
 from src.cherkizon.backend.usecase.list_deploys import ListDeploysUseCase
-from src.cherkizon.common.events import event_bus, EVENT_DEPLOY_HEALTHCHECK_FAILED, EVENT_DEPLOY_HEALTHCHECK_FIXED
+from src.cherkizon.backend.usecase.list_machines import ListMachinesUseCase
+from src.cherkizon.common.events import event_bus, EVENT_DEPLOY_HEALTHCHECK_FAILED, EVENT_DEPLOY_HEALTHCHECK_FIXED, \
+    EVENT_MACHINE_HEALTHCHECK_BAD, EVENT_MACHINE_HEALTHCHECK_FIXED, EVENT_MACHINE_DISK_OVER_USED, \
+    EVENT_MACHINE_RAM_OVER_USED
 
 
 @dataclass
@@ -24,8 +30,12 @@ class _Config:
 @bean(config=("healthcheck", _Config, _Config()))
 class HealthcheckUseCase:
     list_deploys_uc: ListDeploysUseCase
-    healthcheck_check: HealthcheckRepo
+    list_machines_uc: ListMachinesUseCase
+    healthcheck_repo: HealthcheckRepo
+    machine_healthcheck_repo: MachineHealthcheckRepo
     alerts: AlertService
+    alert_if_disk_usage_percent_greater_than: AlertIfDiskUsagePercentBiggerThanRealTimeConfigEntry
+    alert_if_ram_usage_percent_greater_than: AlertIfRAMUsagePercentBiggerThanRealTimeConfigEntry
 
     def init(self, **kwargs):
         self._session = requests.Session()
@@ -36,11 +46,30 @@ class HealthcheckUseCase:
     @threaded
     @repeat(interval=60 * 10)
     def _start(self):
-        deploys = self.list_deploys_uc.find(with_machines=False).deploys
+        deploys = self.list_deploys_uc.find().deploys
         for deploy in deploys:
             healthcheck_result = self._check_health(deploy)
-            self.healthcheck_check.save(healthcheck_result)
+            self.healthcheck_repo.save(healthcheck_result)
             self._process_healthcheck(deploy, healthcheck_result)
+
+        for machine_ip, machine in self.list_machines_uc.find().items():
+
+            self.machine_healthcheck_repo.save(machine)
+
+            bad_health_symptoms = set()
+            if machine.disk.used_perc() * 100 >= (self.alert_if_disk_usage_percent_greater_than.value or 80):
+                bad_health_symptoms.add(EVENT_MACHINE_DISK_OVER_USED)
+            if machine.ram.used_perc() * 100 >= (self.alert_if_ram_usage_percent_greater_than.value or 90):
+                bad_health_symptoms.add(EVENT_MACHINE_RAM_OVER_USED)
+
+            last_check_failed_time = self._check_statuses.get(machine_ip)
+            if bad_health_symptoms:
+                if (not last_check_failed_time) or (datetime.now() - last_check_failed_time > timedelta(minutes=10)):
+                    self._check_statuses[machine_ip] = datetime.now()
+                    event_bus.emit(EVENT_MACHINE_HEALTHCHECK_BAD, bad_health_symptoms, machine)
+            elif last_check_failed_time:
+                self._check_statuses.pop(machine_ip)
+                event_bus.emit(EVENT_MACHINE_HEALTHCHECK_FIXED, machine)
 
     def _process_healthcheck(self, deploy: Deploy, healthcheck_result: HealthcheckResult):
         results = healthcheck_result.result.get("results")

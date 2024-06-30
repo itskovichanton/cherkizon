@@ -22,6 +22,9 @@ class PaaS(Protocol):
     def get_service_team(self, service: str) -> list[User]:
         ...
 
+    def get_machine_team(self, ip: str) -> list[User]:
+        ...
+
 
 @bean(config=("paas", _Config, _Config()))
 class PaaSImpl(PaaS):
@@ -34,4 +37,8 @@ class PaaSImpl(PaaS):
 
     def get_service_team(self, service: str) -> list[User]:
         return parse_response(self._session.get(url=f"{self.config.url}/service/team", params={"service": service}),
+                              cl=list[User])
+
+    def get_machine_team(self, ip: str) -> list[User]:
+        return parse_response(self._session.get(url=f"{self.config.url}/machine/team", params={"ip": ip}),
                               cl=list[User])
