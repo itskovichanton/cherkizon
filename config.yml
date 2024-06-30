@@ -1,9 +1,10 @@
 app:
   version: 1.0.0
   name: cherkizon
+  systemd_name: cherkizon
 
 email:
-  from: finstart.mailer@molbulak.com
+  from_address: finstart.mailer@molbulak.com
   username: finstart.mailer
   password: Shaxz0da201306
   host: mail.molbulak.com
@@ -38,8 +39,11 @@ loggers:
 agent:
   port: 4001
 
-unikron:
-  host: http://localhost:8082
+paas:
+  url: http://localhost:8082
+  s2s:
+    username: cherkizon
+    password: ceb9e0defac650c2d2fb41cf7dcd8884
 
 prod:
   db:

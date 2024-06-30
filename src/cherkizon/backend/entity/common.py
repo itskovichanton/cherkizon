@@ -6,6 +6,17 @@ from src.mybootstrap_core_itskovichanton.utils import hashed
 
 @hashed
 @dataclass
+class User:
+    username: str
+    id: int
+    name: str
+    email: str = None
+    telegram_username: str = None
+    user_role: str = None
+
+
+@hashed
+@dataclass
 class CPU:
     load: float
 
@@ -27,7 +38,7 @@ class MachineInfo:
     ram: MemoryVolume = None  # из free -h
     disk: MemoryVolume = None  # из df -h
     cpu: CPU = None
-    # etcd_port:
+    etcd_port: int = None
 
 
 @hashed

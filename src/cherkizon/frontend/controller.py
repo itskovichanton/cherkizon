@@ -15,6 +15,7 @@ class Controller:
     get_deploy_uc: GetDeployUrlUseCase
     restart_deploy_uc: DeployControllerUseCase
     list_deploys_uc: ListDeploysUseCase
+    list_deploy_etcds_uc: ListDeploysUseCase
 
     async def execute_action_on_deploy(self, deploy_name: str, action: str, machine: str):
         def execute_action(arg):
@@ -23,6 +24,14 @@ class Controller:
         return await self.action_runner.run(execute_action, call=None)
 
     async def list_deploys(self, filter: Deploy):
+        def preprocess(r: DeployListing):
+            for deploy in r.deploys:
+                deploy.machine = deploy.machine.ip
+            return r
+
+        return await self.action_runner.run(self.list_deploys_uc.find, preprocess, call=filter)
+
+    async def list_deploys_etcds(self, filter: Deploy):
         def preprocess(r: DeployListing):
             for deploy in r.deploys:
                 deploy.machine = deploy.machine.ip

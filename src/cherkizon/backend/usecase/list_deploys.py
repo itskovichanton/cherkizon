@@ -46,14 +46,14 @@ class ListDeploysUseCaseImpl(ListDeploysUseCase):
 
         r = DeployListing(deploys=[], machines=set())
 
-        def _get_deploys(machine: Machine):
+        def _get_deploys(m: Machine):
             try:
-                r = self.agent.get_deploys(ip=machine.ip, service=filter.name)
-                for deploy in r:
-                    deploy.machine = machine
-                return r
+                deploys_on_machine = self.agent.get_deploys(ip=m.ip, service=filter.name)
+                for dpl in deploys_on_machine:
+                    dpl.machine = m
+                return deploys_on_machine
             except BaseException as ex:
-                return [Deploy(machine=machine, connection_error=str(ex))]
+                return [Deploy(machine=m, connection_error=str(ex))]
 
         machines = self.machine_repo.list(env=filter.env)
         for machine, deploys in calc_parallel(machines, _get_deploys).items():

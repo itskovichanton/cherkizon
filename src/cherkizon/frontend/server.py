@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from src.mbulak_tools.apis.hc.frontend.support import HealthcheckFastAPISupport
 from src.mybootstrap_core_itskovichanton.logger import LoggerService
 from src.mybootstrap_core_itskovichanton.metrics_export import MetricsExporter
+from src.mybootstrap_core_itskovichanton.realtimeconfig.support import RealtimeConfigFastAPISupport
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 from src.mybootstrap_ioc_itskovichanton.utils import default_dataclass_field
 from src.mybootstrap_mvc_fastapi_itskovichanton.error_handler import ErrorHandlerFastAPISupport
@@ -21,6 +22,7 @@ from src.cherkizon.frontend.controller import Controller
 class Server:
     error_handler_fast_api_support: ErrorHandlerFastAPISupport
     healthcheck_support: HealthcheckFastAPISupport
+    rt_fapi_support: RealtimeConfigFastAPISupport
     presenter: ResultPresenter = default_dataclass_field(JSONResultPresenterImpl(exclude_unset=True))
     controller: Controller
     logger_service: LoggerService
@@ -36,6 +38,7 @@ class Server:
     def init_fast_api(self) -> FastAPI:
         r = FastAPI(title='cherkizon', debug=False)
         self.error_handler_fast_api_support.mount(r)
+        self.rt_fapi_support.mount(r)
         # self.healthcheck_support.mount(r)
         r.add_middleware(HTTPLoggingMiddleware, encoding="utf-8", logger=self.logger_service.get_file_logger("http"))
         r.add_middleware(
@@ -50,7 +53,6 @@ class Server:
         return r
 
     def add_routes(self):
-
         @self.fast_api.post("/deploy/list")
         async def list_deploys(request: Request, filter: Deploy):
             return self.presenter.present(await self.controller.list_deploys(filter))

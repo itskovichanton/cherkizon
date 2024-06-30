@@ -1,18 +1,18 @@
-import datetime
+from datetime import datetime, timedelta
 import json
 from dataclasses import dataclass
 
 import requests
 from paprika import threaded
 from src.mybootstrap_core_itskovichanton.alerts import AlertService, Alert
-from src.mybootstrap_core_itskovichanton.utils import repeat
+from src.mybootstrap_core_itskovichanton.utils import repeat, hashed
 from src.mybootstrap_ioc_itskovichanton.ioc import bean
 from src.mybootstrap_mvc_fastapi_itskovichanton.utils import parse_response
 
 from src.cherkizon.backend.entity.common import Deploy, HealthcheckResult
 from src.cherkizon.backend.repo.healthcheck import HealthcheckRepo
 from src.cherkizon.backend.usecase.list_deploys import ListDeploysUseCase
-from src.cherkizon.common.events import event_bus, EVENT_HEALTHCHECK_RESULT_RECEIVED
+from src.cherkizon.common.events import event_bus, EVENT_DEPLOY_HEALTHCHECK_FAILED, EVENT_DEPLOY_HEALTHCHECK_FIXED
 
 
 @dataclass
@@ -30,6 +30,7 @@ class HealthcheckUseCase:
     def init(self, **kwargs):
         self._session = requests.Session()
         self._session.timeout = 5
+        self._check_statuses: dict[str, datetime] = {}
         self._start()
 
     @threaded
@@ -40,8 +41,6 @@ class HealthcheckUseCase:
             healthcheck_result = self._check_health(deploy)
             self.healthcheck_check.save(healthcheck_result)
             self._process_healthcheck(deploy, healthcheck_result)
-            event_bus.emit(EVENT_HEALTHCHECK_RESULT_RECEIVED, deploy=deploy, healthcheck_result=healthcheck_result,
-                           threads=True)
 
     def _process_healthcheck(self, deploy: Deploy, healthcheck_result: HealthcheckResult):
         results = healthcheck_result.result.get("results")
@@ -51,11 +50,14 @@ class HealthcheckUseCase:
             return (not passed) and (type(passed) == bool)
 
         failed_checks = [x for x in results if is_failed(x)]
+        last_check_failed_time = self._check_statuses.get(deploy.systemd_name)
         if failed_checks:
-            self.alerts.send(
-                Alert(
-                    message=f"Healthcheck деплоя '{deploy.systemd_name}' завершился с ошибками\n\n{failed_checks}")
-            )
+            if (not last_check_failed_time) or (datetime.now() - last_check_failed_time > timedelta(minutes=10)):
+                self._check_statuses[deploy.systemd_name] = datetime.now()
+                event_bus.emit(EVENT_DEPLOY_HEALTHCHECK_FAILED, deploy, healthcheck_result)
+        elif last_check_failed_time:
+            self._check_statuses.pop(deploy.systemd_name)
+            event_bus.emit(EVENT_DEPLOY_HEALTHCHECK_FIXED, deploy, healthcheck_result)
 
     def _check_health(self, deploy: Deploy) -> HealthcheckResult:
         r = HealthcheckResult(service_name=deploy.systemd_name)
@@ -67,5 +69,5 @@ class HealthcheckUseCase:
                 r.result = json.loads(r.result)
         except BaseException as ex:
             r.result = {"error": {"message": str(ex)}}
-        r.time = datetime.datetime.now()
+        r.time = datetime.now()
         return r

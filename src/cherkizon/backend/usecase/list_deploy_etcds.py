@@ -9,20 +9,14 @@ from src.cherkizon.backend.entity.common import MachineInfo
 from src.cherkizon.backend.repo.machine import MachineRepo
 
 
-@dataclass
-class WithMachinesOptions:
-    enrich: bool = True
-    with_health: bool = True
-
-
-class ListMachinesUseCase(Protocol):
+class ListDeployETCDsUseCase(Protocol):
 
     def find(self, ips: set[str] = None) -> dict[str, MachineInfo]:
         ...
 
 
 @bean
-class ListMachinesUseCaseImpl(ListMachinesUseCase):
+class ListDeployETCDsUseCaseImpl(ListDeployETCDsUseCase):
     agent: Agent
     machine_repo: MachineRepo
 
