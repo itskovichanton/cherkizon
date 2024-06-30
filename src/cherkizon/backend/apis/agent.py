@@ -69,15 +69,4 @@ class AgentImpl(Agent):
         return Deploy(port=r["port_from_pid"], port_status=r["port_status"], last_start=r["last_start"])
 
     def _call(self, ip, endpoint, cl=None, **kwargs):
-        r = self._session.get(url=f"http://{ip}:{self.config.port}/{endpoint}", params=kwargs)
-        r = parse_response(r)
-        if cl:
-            if is_listable(r):
-                @dataclass
-                class _Wrapped:
-                    value: cl
-
-                r = from_dict(data_class=_Wrapped, data={"value": r}, config=Config(check_types=False)).value
-            else:
-                r = from_dict(data_class=cl, data=r, config=Config(check_types=False))
-        return r
+        return parse_response(self._session.get(url=f"http://{ip}:{self.config.port}/{endpoint}", params=kwargs), cl=cl)

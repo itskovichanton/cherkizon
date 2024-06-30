@@ -60,6 +60,7 @@ class Machine:
     env: str = None
     description: str = None
     info: MachineInfo = None
+    etcd_port: int = None
 
 
 @hashed
