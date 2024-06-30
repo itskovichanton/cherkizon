@@ -14,7 +14,7 @@ from src.cherkizon.backend.repo.schema import MachineM, HealthcheckM, MachineHea
 
 class MachineHealthcheckRepo(Protocol):
 
-    def save(self, r: MachineInfo):
+    def save(self, r: MachineHealthcheckResult):
         ...
 
     def list(self, ips: list[str] = None) -> list[MachineHealthcheckResult]:
@@ -36,14 +36,14 @@ class MachineHealthcheckRepoImpl(MachineHealthcheckRepo):
         r = self._list(ips)
         if r:
             for hc in r:
-                hc.result = json.loads(hc.result)
+                hc.machine = json.loads(hc.machine)
         return r
 
-    def save(self, r: MachineInfo):
+    def save(self, r: MachineHealthcheckResult):
         m = MachineHealthcheckM()
         m.result = json.dumps(to_dict_deep(r))
         m.time = datetime.datetime.now()
-        m.ip = r.ip
+        m.ip = r.machine.ip
         try:
             m.save(force_insert=True)
         except:

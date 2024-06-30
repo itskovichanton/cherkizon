@@ -46,30 +46,8 @@ class HealthcheckUseCase:
     @threaded
     @repeat(interval=60 * 10)
     def _start(self):
-        deploys = self.list_deploys_uc.find().deploys
-        for deploy in deploys:
-            healthcheck_result = self._check_health(deploy)
-            self.healthcheck_repo.save(healthcheck_result)
-            self._process_healthcheck(deploy, healthcheck_result)
-
-        for machine_ip, machine in self.list_machines_uc.find().items():
-
-            self.machine_healthcheck_repo.save(machine)
-
-            bad_health_symptoms = set()
-            if machine.disk.used_perc() * 100 >= (self.alert_if_disk_usage_percent_greater_than.value or 80):
-                bad_health_symptoms.add(EVENT_MACHINE_DISK_OVER_USED)
-            if machine.ram.used_perc() * 100 >= (self.alert_if_ram_usage_percent_greater_than.value or 90):
-                bad_health_symptoms.add(EVENT_MACHINE_RAM_OVER_USED)
-
-            last_check_failed_time = self._check_statuses.get(machine_ip)
-            if bad_health_symptoms:
-                if (not last_check_failed_time) or (datetime.now() - last_check_failed_time > timedelta(minutes=10)):
-                    self._check_statuses[machine_ip] = datetime.now()
-                    event_bus.emit(EVENT_MACHINE_HEALTHCHECK_BAD, bad_health_symptoms, machine)
-            elif last_check_failed_time:
-                self._check_statuses.pop(machine_ip)
-                event_bus.emit(EVENT_MACHINE_HEALTHCHECK_FIXED, machine)
+        self._check_deploys_hc()
+        self._check_machines_hc()
 
     def _process_healthcheck(self, deploy: Deploy, healthcheck_result: HealthcheckResult):
         results = healthcheck_result.result.get("results")
@@ -100,3 +78,33 @@ class HealthcheckUseCase:
             r.result = {"error": {"message": str(ex)}}
         r.time = datetime.now()
         return r
+
+    def _get_health_symptoms(self, machine):
+        r = set()
+        if machine.disk.used_perc() * 100 >= (self.alert_if_disk_usage_percent_greater_than.value or 80):
+            r.add(EVENT_MACHINE_DISK_OVER_USED)
+        if machine.ram.used_perc() * 100 >= (self.alert_if_ram_usage_percent_greater_than.value or 90):
+            r.add(EVENT_MACHINE_RAM_OVER_USED)
+        return r
+
+    def _check_deploys_hc(self):
+        deploys = self.list_deploys_uc.find().deploys
+        for deploy in deploys:
+            healthcheck_result = self._check_health(deploy)
+            self.healthcheck_repo.save(healthcheck_result)
+            self._process_healthcheck(deploy, healthcheck_result)
+
+    def _check_machines_hc(self):
+        for machine_ip, machine in self.list_machines_uc.find().items():
+
+            bad_health_symptoms = self._get_health_symptoms(machine)
+            self.machine_healthcheck_repo.save(MachineHealthcheckResult(machine=machine, symtomps=bad_health_symptoms))
+
+            last_check_failed_time = self._check_statuses.get(machine_ip)
+            if bad_health_symptoms:
+                if (not last_check_failed_time) or (datetime.now() - last_check_failed_time > timedelta(minutes=10)):
+                    self._check_statuses[machine_ip] = datetime.now()
+                    event_bus.emit(EVENT_MACHINE_HEALTHCHECK_BAD, bad_health_symptoms, machine)
+            elif last_check_failed_time:
+                self._check_statuses.pop(machine_ip)
+                event_bus.emit(EVENT_MACHINE_HEALTHCHECK_FIXED, machine)

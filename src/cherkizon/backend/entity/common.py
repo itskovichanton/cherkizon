@@ -58,7 +58,8 @@ class HealthcheckResult:
 @hashed
 @dataclass
 class MachineHealthcheckResult:
-    result: MachineInfo = None
+    machine: MachineInfo = None
+    symtomps: set = None
     time: datetime.datetime = None
 
 
